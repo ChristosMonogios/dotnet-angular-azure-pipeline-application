@@ -46,8 +46,8 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
     reserved: true
   }
   sku: {
-    name: 'F1'
-    tier: 'Free'
+    name: 'S1'
+    tier: 'Standard'
   }
   kind: 'linux' // Do not forget to add this, otherwise you get the error that linuxFxVersion: 'DOTNETCORE|8.0' is not recognized
 }
