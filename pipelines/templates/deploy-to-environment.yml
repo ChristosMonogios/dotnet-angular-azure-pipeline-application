@@ -1,0 +1,75 @@
+parameters:
+  - name: environment
+    type: string
+
+jobs:
+  - deployment: Deploy${{ parameters.environment }} # Each job has to have a unique name, so we use the environment name
+    environment: ${{ parameters.environment }}
+    variables:
+      location: 'XXX' # Define the value you want for location
+      webAppName: 'XXX' # Define the value you want for the name of the application
+      slotName: '${{ parameters.environment }}-slot'
+      resourceGroupName: 'XXX' # Define the value you want for the Azure Resource Group name
+      templateFile: './pipelines/bicep/main.bicep'
+      parametersFile: './pipelines/bicep/main.bicepparam'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self # avoids issue with bicep files not being found.
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact: 'angularApp'
+              path: '$(Build.ArtifactStagingDirectory)/angularApp/'
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact: 'dotnetApp'
+              path: '$(Build.ArtifactStagingDirectory)/dotnetApp/'
+
+            # We are not combining the two applications in one new folder. The Angular app is stored inside a new wwwroot folder. This folder is then going to be served from the WebApp
+          - script: |
+              mkdir -p $(Build.ArtifactStagingDirectory)/application
+              cp -r $(Build.ArtifactStagingDirectory)/dotnetApp/s/* $(Build.ArtifactStagingDirectory)/application/
+              cp -r $(Build.ArtifactStagingDirectory)/angularApp/* $(Build.ArtifactStagingDirectory)/application/wwwroot
+            displayName: 'Combine Artifacts'
+
+            # Zip the whole content of the application folder together
+          - task: ArchiveFiles@2
+            displayName: 'Zip all files under /application/ together'
+            inputs:
+              rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/application'  # The folder or file to archive
+              includeRootFolder: false  # Whether to include the root folder in the archive
+              archiveType: 'zip'  # The type of archive to create
+              archiveFile: '$(Build.ArtifactStagingDirectory)/application.zip'  # The path to the output archive file
+              verbose: true
+
+          - task: AzureCLI@2
+            displayName: 'Deploy Bicep to ${{ parameters.environment }} Environment'
+            inputs:
+              azureSubscription: 'XXX' # Define a new Azure DevOps Service Connection and use its name here
+              scriptType: bash
+              scriptLocation: inlineScript
+              useGlobalConfig: false
+              inlineScript: |
+                az --version
+                az group create --name $(resourceGroupName) --location $(location)
+                az deployment group create --resource-group $(resourceGroupName) --template-file $(templateFile) --parameters $(parametersFile)
+
+          - task: AzureCLI@2
+            displayName: 'Create ${{ parameters.environment }} Deployment Slot'
+            inputs:
+              azureSubscription: 'XXX' # Use the same name of the Service Connection as before
+              scriptType: bash
+              scriptLocation: inlineScript
+              useGlobalConfig: false
+              inlineScript: |
+                az webapp deployment slot create --name $(webAppName) --resource-group $(resourceGroupName) --slot $(slotName)
+
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: 'XXX' # Use the same name of the Service Connection as before
+              appType: 'webApp'
+              appName: $(webAppName)
+              package: '$(Build.ArtifactStagingDirectory)/application.zip'
+              slotName: $(slotName)
+            displayName: 'Deploy to ${{ parameters.environment }} Slot'

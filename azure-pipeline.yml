@@ -1,0 +1,29 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+# Define the default parameters as a list of strings  and use them in the following for-loop for deploying to multiple environments
+parameters:
+  - name: environments
+    type: object
+    default:
+      - dev
+      - prod
+
+stages:
+- stage: AngularApplication
+  jobs:
+  - template: ./pipelines/templates/angular-application.yml
+- stage: DotnetApplication
+  jobs:
+  - template: ./pipelines/templates/dotnet-application.yml
+- ${{ each env in parameters.environments }}: # Create a new stage for each environment
+  - stage: DeployTo${{ env }}
+    dependsOn: DotnetApplication
+    condition: succeeded()
+    jobs:
+        - template: ./pipelines/templates/deploy-to-environment.yml
+          parameters:
+            environment: ${{ env }}
