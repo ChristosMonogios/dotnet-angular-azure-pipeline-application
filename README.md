@@ -1,8 +1,8 @@
 # dotnet-angular-azure-pipeline-application
 
-## A .NET & Angular application that uses an Azure DevOps pipeline for deployment on multiple environments
+**A .NET & Angular application that uses an Azure DevOps pipeline for deployment on multiple environments**
 
-You can find more information about how the Azure DevOps pipeline in this repository works [in a tutorial I wrote on my personal blog](https://christosmonogios.com/2024/10/03/deploy-a-dotnet-and-angular-application-to-an-azure-app-service-with-multiple-environments-using-an-azure-pipeline/).
+You can find more information about how the Azure DevOps pipeline of this repository works [in a tutorial I wrote on my personal blog](https://christosmonogios.com/2024/10/03/deploy-a-dotnet-and-angular-application-to-an-azure-app-service-with-multiple-environments-using-an-azure-pipeline/).
 
 In the tutorial you can learn:
 
