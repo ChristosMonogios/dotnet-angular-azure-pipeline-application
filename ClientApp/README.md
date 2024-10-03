@@ -1,7 +1,5 @@
 # dotnet-angular-application
 
-You can find more information about how the Azure DevOps pipeline of this project works [in a tutorial I wrote on my personal blog](TODO){:target="_blank"}.
-
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 12.0.2.
 
 ## Development server
